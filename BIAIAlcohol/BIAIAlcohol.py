@@ -68,7 +68,6 @@ applicationConfiguration=Configuration()
 import random
 import math
 
-
 #CLASSES needed to store data
 
 #defaults are for beer 0.5, wine 0.12., vodka 0.30
