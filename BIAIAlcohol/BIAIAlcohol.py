@@ -135,14 +135,15 @@ class AmountOfAlcohol:
         self.beverage3Percentage=float(input.split(",")[9].replace(" ",""))
         return None
 
+    #!important comments
     def toArray(self):
         result = []
         result.append(self.beverage1Amount)
         result.append(self.beverage1Percentage)
-        result.append(self.beverage2Amount)
-        result.append(self.beverage2Percentage)
-        result.append(self.beverage3Amount)
-        result.append(self.beverage3Percentage)
+        #result.append(self.beverage2Amount)
+        #result.append(self.beverage2Percentage)
+        #result.append(self.beverage3Amount)
+        #result.append(self.beverage3Percentage)
         return result
 
 class Person:
@@ -324,11 +325,11 @@ model=0
 if applicationConfiguration.doTrainModel==1:
     print("Creating model")
     model = keras.models.Sequential()
-    model.add(keras.layers.Dense(250,activation='relu'))
-    model.add(keras.layers.Dense(250,activation='relu'))
-    model.add(keras.layers.Dense(250,activation='softmax'))
+    model.add(keras.layers.Dense(101,activation='relu'))
+    model.add(keras.layers.Dense(101,activation='relu'))
+    model.add(keras.layers.Dense(101,activation='softmax'))
     model.compile('adam','sparse_categorical_crossentropy',['accuracy'])
-    model.fit(x=np.array(datasetX),y=np.asarray(datasetY),epochs=50,verbose=1)
+    model.fit(x=np.array(datasetX),y=np.asarray(datasetY),epochs=10,verbose=2)
     model.save(applicationConfiguration.modelLocation)
     #TODO
 
@@ -382,8 +383,6 @@ if applicationConfiguration.useTestSet==1:
     #for i in range(0,applicationConfiguration.datasetSize):
     for i in range(0,applicationConfiguration.testSetSize-1):
         testsetX.append(testSet[i].toArray())
-        #bac=[]
-        #bac.append(dataset[i].CalculateBAC())
         testsetY.append(testSet[i].CalculateBAC())
     for i in range(0,applicationConfiguration.testSetSize-1):
         testdata=[]
