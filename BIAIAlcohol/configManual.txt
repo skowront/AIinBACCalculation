@@ -1,0 +1,33 @@
+GenerateData? - when 1 app will generate dataset
+RoundPlaces - how should the data be rounded, better no touch
+DatasetSize - how big should the dataset be, or how big it is, for it may be equal to 10000 but when set to 1000 the app will use only 1000 first records
+RandomDrinkingTimeMaxHours - param for randomization
+Beverage1MaxAmountML - param for randomization in mililiters
+Beverage1MinAmountML - param for randomization in mililiters
+Beverage2MaxAmountML - param for randomization in mililiters
+Beverage2MinAmountML - param for randomization in mililiters
+Beverage3MaxAmountML - param for randomization in mililiters
+Beverage3MinAmountML - param for randomization in mililiters
+Beverage1%Min - percentage of an alcohol, scale from 0.0-1.0, param for randomization in mililiters
+Beverage1%Max - percentage of an alcohol, scale from 0.0-1.0, param for randomization in mililiters
+Beverage2%Min - percentage of an alcohol, scale from 0.0-1.0, param for randomization in mililiters
+Beverage2%Max - percentage of an alcohol, scale from 0.0-1.0, param for randomization in mililiters
+Beverage3%Min - percentage of an alcohol, scale from 0.0-1.0, param for randomization in mililiters
+Beverage3%Max - percentage of an alcohol, scale from 0.0-1.0, param for randomization in mililiters
+AgeMin - param for randomization in mililiters
+AgeMax - param for randomization in mililiters
+HeightMin - param for randomization in mililiters
+HeightMax - param for randomization in mililiters
+WeightMin - param for randomization in mililiters
+WeightMax - param for randomization in mililiters
+AddUncertainity+-21%? - when equal to 1, generator will add some noise to the dataset based on theoretical uncertainity
+Gender:both: may be equal to 'male' or 'female' or 'both' - param for randomization in mililiters
+DatasetLocation - filename/path to dataset
+TrainModel? - when equal 1, the model will be trained
+UseModel? - when equal 1 model will be used
+ModelLocation - model path/location
+SelfTest? - app will generate testset and autotest its accuracy
+GenerateTestSet? - app will generate a test set 
+TestSetSize - test set size
+TestSetLocation - test set path/location
+UseTestSet? - when equal 1, the app will use test set from location above and size above above
