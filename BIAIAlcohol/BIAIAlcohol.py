@@ -30,43 +30,55 @@ class Configuration:
     HeightMax=230.0
     WeightMin=40.0
     WeightMax=300.0
+    doAddUncertainity=0
     genderDiversity="both"
     datasetLocation="WidmarkBACdataset.txt"
+    doTrainModel=1
+    doUseModel=0
+    modelLocation="model.h5"
     def __init__(self):
         file=open(configurationFile, "r")
-        self.generateData=int(file.readline().split(configurationFileSeparator)[1])
-        self.roundPlaces=int(file.readline().split(configurationFileSeparator)[1])
-        self.datasetSize=int(file.readline().split(configurationFileSeparator)[1])
-        self.randomDrinkingTimeMaxHours=float(file.readline().split(configurationFileSeparator)[1])
-        self.Beverage1MaxAmountML=float(file.readline().split(configurationFileSeparator)[1])
-        self.Beverage1MinAmountML=float(file.readline().split(configurationFileSeparator)[1])
-        self.Beverage2MaxAmountML=float(file.readline().split(configurationFileSeparator)[1])
-        self.Beverage2MinAmountML=float(file.readline().split(configurationFileSeparator)[1])
-        self.Beverage3MaxAmountML=float(file.readline().split(configurationFileSeparator)[1])
-        self.Beverage3MinAmountML=float(file.readline().split(configurationFileSeparator)[1])
-        self.Beverage1PercentageMin=float(file.readline().split(configurationFileSeparator)[1])
-        self.Beverage1PercentageMax=float(file.readline().split(configurationFileSeparator)[1])
-        self.Beverage2PercentageMin=float(file.readline().split(configurationFileSeparator)[1])
-        self.Beverage2PercentageMax=float(file.readline().split(configurationFileSeparator)[1])
-        self.Beverage3PercentageMin=float(file.readline().split(configurationFileSeparator)[1])
-        self.Beverage3PercentageMax=float(file.readline().split(configurationFileSeparator)[1])
-        self.AgeMin=float(file.readline().split(configurationFileSeparator)[1])
-        self.AgeMax=float(file.readline().split(configurationFileSeparator)[1])
-        self.HeightMin=float(file.readline().split(configurationFileSeparator)[1])
-        self.HeightMax=float(file.readline().split(configurationFileSeparator)[1])
-        self.WeightMin=float(file.readline().split(configurationFileSeparator)[1])
-        self.WeightMax=float(file.readline().split(configurationFileSeparator)[1])
-        self.GenderDiversity=(file.readline().split(configurationFileSeparator)[1])
-        self.datasetLocation=(file.readline().split(configurationFileSeparator)[1])
+        self.generateData=int(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.roundPlaces=int(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.datasetSize=int(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.randomDrinkingTimeMaxHours=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.Beverage1MaxAmountML=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.Beverage1MinAmountML=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.Beverage2MaxAmountML=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.Beverage2MinAmountML=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.Beverage3MaxAmountML=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.Beverage3MinAmountML=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.Beverage1PercentageMin=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.Beverage1PercentageMax=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.Beverage2PercentageMin=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.Beverage2PercentageMax=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.Beverage3PercentageMin=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.Beverage3PercentageMax=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.AgeMin=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.AgeMax=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.HeightMin=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.HeightMax=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.WeightMin=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.WeightMax=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.doAddUncertainity=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.GenderDiversity=(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.datasetLocation=(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.doTrainModel=(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.doUseModel=(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.modelLocation=(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
         file.close()
         return None
 
 #globalConfiguration
 applicationConfiguration=Configuration()
 
+
 #imports
 import random
 import math
+import tensorflow as tf
+import keras
+
 
 #CLASSES needed to store data
 
@@ -89,7 +101,7 @@ class AmountOfAlcohol:
         return None
 
     def pureAlcohol(self):
-        return beverage1Amount*beverage1Percentage+beverage2Amount*beverage2Percentage+beverage3Amount+beverage3Percentage
+        return self.beverage1Amount*self.beverage1Percentage+self.beverage2Amount*self.beverage2Percentage+self.beverage3Amount+self.beverage3Percentage
 
     def randomize(self):
         self.beverage1Amount=round(random.uniform(applicationConfiguration.Beverage1MinAmountML,applicationConfiguration.Beverage1MaxAmountML),applicationConfiguration.roundPlaces)
@@ -111,6 +123,16 @@ class AmountOfAlcohol:
         self.beverage3Amount=float(input.split(",")[8].replace(" ",""))
         self.beverage3Percentage=float(input.split(",")[9].replace(" ",""))
         return None
+
+    def toArray(self):
+        result = []
+        result.append(self.beverage1Amount)
+        result.append(self.beverage1Percentage)
+        result.append(self.beverage2Amount)
+        result.append(self.beverage2Percentage)
+        result.append(self.beverage3Amount)
+        result.append(self.beverage3Percentage)
+        return result
 
 class Person:
     age=0.0
@@ -134,10 +156,10 @@ class Person:
     #tbw = -2.097 + (0.1069*W) + (0.2466*M)
     #where M-mass, W-height, L-age
     def calculateBodyLiquids(self):
-        if gender==0.0:
-            return 2.447 - (0.09156*age) + (0.1074*height) + (0.3362*weight)
+        if self.gender==0.0:
+            return 2.447 - (0.09156*self.age) + (0.1074*self.height) + (0.3362*self.weight)
         else:
-            return -2.097 + (0.1069*height) +(0.2466*weight)
+            return -2.097 + (0.1069*self.height) +(0.2466*self.weight)
 
     def randomize(self):
         self.age=round(random.uniform(applicationConfiguration.AgeMin,applicationConfiguration.AgeMax),applicationConfiguration.roundPlaces)
@@ -160,6 +182,14 @@ class Person:
         self.weight=float(input.split(",")[2].replace(" ",""))
         self.gender=float(input.split(",")[3].replace(" ",""))
         return None
+
+    def toArray(self):
+        result=[]
+        result.append(self.age)
+        result.append(self.height)
+        result.append(self.weight)
+        result.append(self.gender)
+        return result
 
 class BloodAlcoholContent:
     person:Person#in kg
@@ -188,13 +218,16 @@ class BloodAlcoholContent:
     def CalculateBAC(self):
         alcoholDensity=0.79
         decay=0.1
-        if drinksOften==0.0:
+        if self.drinksOften==0.0:
             decay=0.1
-        elif drinksOften==1.0:
+        elif self.drinksOften==1.0:
             decay=0.15
-        elif drinksOften==2.0:
+        elif self.drinksOften==2.0:
             decay=0.2
-        return (amountOfAlcohol.pureAlcohol()/person.calculateBodyLiquids())*alcoholDensity-(drinkingTime*decay);
+        result=(self.amountOfAlcohol.pureAlcohol()/self.person.calculateBodyLiquids())*alcoholDensity-(self.drinkingTime*decay)
+        if applicationConfiguration.doAddUncertainity==1:
+            result=result+result*(0.21)
+        return result;
 
     def randomize(self):
         self.person=Person().randomize()
@@ -217,6 +250,18 @@ class BloodAlcoholContent:
         self.drinksOften=float(input.split(separator)[11].replace(" ",""))
         return None
 
+    def toArray(self):
+        result=[]
+        tPerson=self.person.toArray()
+        for obj in tPerson:
+            result.append(obj)
+        tAoA=self.amountOfAlcohol.toArray()
+        for obj in tAoA:
+            result.append(obj)
+        result.append(self.drinkingTime)
+        result.append(self.drinksOften)
+        return result
+
 #APPLICATION START
 
 #check if user wants to generate dataset
@@ -230,7 +275,33 @@ if applicationConfiguration.generateData==1:
     file.close()
 
 
+#load dataset from file 
+dataset = []
+file=open((applicationConfiguration.datasetLocation),"r")
+_=file.readline()
+for i in range(0,applicationConfiguration.datasetSize):
+    BAC=BloodAlcoholContent()
+    BAC.bloodAlcoholContentFromString(file.readline())
+    dataset.append(BAC)
+file.close()
+
+#convert BACs to array X and Y
+datasetX=[]
+datasetY=[]
+for i in range(0,applicationConfiguration.datasetSize):
+    datasetX.append(dataset[i].toArray())
+    datasetY.append(dataset[i].CalculateBAC())
+    
+
+#create model and train it with dataset
+if applicationConfiguration.doTrainModel==1:
+    model = keras.models.Sequential()
+    #TODO
 
 
-
+#use model
+if applicationConfiguration.doUseModel==1:
+    model=load_model('model.h5')
+    print("Model loaded from model.h5")
+    #TODO
 
