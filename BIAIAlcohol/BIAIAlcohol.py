@@ -36,6 +36,11 @@ class Configuration:
     doTrainModel=1
     doUseModel=0
     modelLocation="model.h5"
+    selfTest=0
+    generateTestSet=1
+    testSetSize=10
+    testSetLocation="testSet.txt"
+    useTestSet=1
     def __init__(self):
         file=open(configurationFile, "r")
         self.generateData=int(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
@@ -60,12 +65,17 @@ class Configuration:
         self.HeightMax=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
         self.WeightMin=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
         self.WeightMax=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
-        self.doAddUncertainity=float(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.doAddUncertainity=int(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
         self.GenderDiversity=(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
         self.datasetLocation=(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
-        self.doTrainModel=(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
-        self.doUseModel=(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.doTrainModel=int(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.doUseModel=int(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
         self.modelLocation=(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.selfTest=int(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.generateTestSet=int(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.testSetSize=int(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.testSetLocation=(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.useTestSet=int(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
         file.close()
         return None
 
@@ -78,7 +88,8 @@ import random
 import math
 import tensorflow as tf
 import keras
-
+from keras.models import load_model
+import numpy as np
 
 #CLASSES needed to store data
 
@@ -101,7 +112,7 @@ class AmountOfAlcohol:
         return None
 
     def pureAlcohol(self):
-        return self.beverage1Amount*self.beverage1Percentage+self.beverage2Amount*self.beverage2Percentage+self.beverage3Amount+self.beverage3Percentage
+        return 1000*self.beverage1Amount*self.beverage1Percentage+1000*self.beverage2Amount*self.beverage2Percentage+1000*self.beverage3Amount+self.beverage3Percentage
 
     def randomize(self):
         self.beverage1Amount=round(random.uniform(applicationConfiguration.Beverage1MinAmountML,applicationConfiguration.Beverage1MaxAmountML),applicationConfiguration.roundPlaces)
@@ -215,6 +226,7 @@ class BloodAlcoholContent:
     #0.1 promila na godzinę dla osób pijących rzadko
     #0.15 promila na godzinę dla osób pijących przeciętnie
     #0.2 promila na godzinę dla osób pijących często
+    #returns resul*100
     def CalculateBAC(self):
         alcoholDensity=0.79
         decay=0.1
@@ -227,19 +239,29 @@ class BloodAlcoholContent:
         result=(self.amountOfAlcohol.pureAlcohol()/self.person.calculateBodyLiquids())*alcoholDensity-(self.drinkingTime*decay)
         if applicationConfiguration.doAddUncertainity==1:
             result=result+result*(0.21)
-        return result;
+        if result<0:
+            result=0
+        return result*10;
 
+    #max 0.0010% alcohol content
     def randomize(self):
         self.person=Person().randomize()
         self.amountOfAlcohol=AmountOfAlcohol().randomize()
         self.drinkingTime=round(random.uniform(0.0,applicationConfiguration.randomDrinkingTimeMaxHours),applicationConfiguration.roundPlaces)
         self.drinksOften=random.randint(0,2)
+        while self.CalculateBAC()>100:
+            self.person=Person().randomize()
+            self.amountOfAlcohol=AmountOfAlcohol().randomize()
+            self.drinkingTime=round(random.uniform(0.0,applicationConfiguration.randomDrinkingTimeMaxHours),applicationConfiguration.roundPlaces)
+            self.drinksOften=random.randint(0,2)
         return self
 
+    #returns result
     def bloodAlcoholContentToString(self):
         tempPerson=self.person.personToString()
         tempAoA=self.amountOfAlcohol.amountOfAlcoholToString()
-        return tempPerson+separator+tempAoA+separator+str(self.drinkingTime).ljust(len("DrinkingTime "))+separator+str(self.drinksOften).ljust(len("DrinksOften "))
+        result= tempPerson+separator+tempAoA+separator+str(self.drinkingTime).ljust(len("DrinkingTime "))+separator+str(self.drinksOften).ljust(len("DrinksOften "))
+        return result
 
     def bloodAlcoholContentFromString(self,input):
         self.person=Person()
@@ -254,12 +276,12 @@ class BloodAlcoholContent:
         result=[]
         tPerson=self.person.toArray()
         for obj in tPerson:
-            result.append(obj)
+            result.append(float(obj))
         tAoA=self.amountOfAlcohol.toArray()
         for obj in tAoA:
-            result.append(obj)
-        result.append(self.drinkingTime)
-        result.append(self.drinksOften)
+            result.append(float(obj))
+        result.append(float(self.drinkingTime))
+        result.append(float(self.drinksOften))
         return result
 
 #APPLICATION START
@@ -285,23 +307,97 @@ for i in range(0,applicationConfiguration.datasetSize):
     dataset.append(BAC)
 file.close()
 
+#BELOW UNCERTAIN, TODO then
+
 #convert BACs to array X and Y
 datasetX=[]
 datasetY=[]
+#for i in range(0,applicationConfiguration.datasetSize):
 for i in range(0,applicationConfiguration.datasetSize):
     datasetX.append(dataset[i].toArray())
+    #bac=[]
+    #bac.append(dataset[i].CalculateBAC())
     datasetY.append(dataset[i].CalculateBAC())
     
-
+model=0
 #create model and train it with dataset
 if applicationConfiguration.doTrainModel==1:
+    print("Creating model")
     model = keras.models.Sequential()
+    model.add(keras.layers.Dense(250,activation='relu'))
+    model.add(keras.layers.Dense(250,activation='relu'))
+    model.add(keras.layers.Dense(250,activation='softmax'))
+    model.compile('adam','sparse_categorical_crossentropy',['accuracy'])
+    model.fit(x=np.array(datasetX),y=np.asarray(datasetY),epochs=50,verbose=1)
+    model.save(applicationConfiguration.modelLocation)
     #TODO
-
 
 #use model
 if applicationConfiguration.doUseModel==1:
-    model=load_model('model.h5')
-    print("Model loaded from model.h5")
-    #TODO
+    model=keras.models.load_model(applicationConfiguration.modelLocation)
+    print("Model loaded from: "+applicationConfiguration.modelLocation)
+
+val_loss,val_acc=model.evaluate([datasetX],datasetY)
+print(val_loss,val_acc)
+
+
+#predict sth that ML learned
+if applicationConfiguration.selfTest==1:
+    for i in range(0,100):
+        id=random.randint(0,applicationConfiguration.datasetSize-1)
+        data=[]
+        for obj in datasetX[id]:
+            data.append(obj)
+        prediction=model.predict([[data]])
+        print("ML predicted: ") 
+        print(float(np.argmax(prediction[0]))/10.0)
+        print("Result is: ")
+        print(dataset[id].CalculateBAC()/10.0)
+        print("-----------------------")
+
+#check if user wants to generate testSet
+if applicationConfiguration.generateTestSet==1:
+    #generate random data and send it to file
+    fileHeader="|Age   |Height |Weight |Gender |Bev1Amount |Bev1% |Bev2Amount |Bev2% |Bev3Amount |Bev3% |DrinkingTime |DrinksOften |"
+    file=open(applicationConfiguration.testSetLocation, "w")
+    _=file.write(fileHeader+"\n")
+    for i in range(0,applicationConfiguration.testSetSize):
+        _=file.write(BloodAlcoholContent().randomize().bloodAlcoholContentToString()+"\n")
+    file.close()
+
+#test if user wants to use testset
+if applicationConfiguration.useTestSet==1:
+    #load dataset from file 
+    testSet = []
+    file=open((applicationConfiguration.testSetLocation),"r")
+    _=file.readline()
+    for i in range(0,applicationConfiguration.testSetSize):
+        BAC=BloodAlcoholContent()
+        BAC.bloodAlcoholContentFromString(file.readline())
+        testSet.append(BAC)
+    file.close()
+    #convert BACs to array X and Y
+    testsetX=[]
+    testsetY=[]
+    #for i in range(0,applicationConfiguration.datasetSize):
+    for i in range(0,applicationConfiguration.testSetSize-1):
+        testsetX.append(testSet[i].toArray())
+        #bac=[]
+        #bac.append(dataset[i].CalculateBAC())
+        testsetY.append(testSet[i].CalculateBAC())
+    for i in range(0,applicationConfiguration.testSetSize-1):
+        testdata=[]
+        for obj in testsetX[i]:
+            testdata.append(obj)
+        prediction=model.predict([[testdata]])
+        print("ML predicted: ") 
+        print(float(np.argmax(prediction[0]))/10.0)
+        print("Result is: ")
+        print(dataset[i].CalculateBAC()/10.0)
+        print("-----------------------")
+
+
+
+#TODO console interface
+
 
