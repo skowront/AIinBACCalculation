@@ -337,7 +337,6 @@ if applicationConfiguration.doTrainModel==1:
     print("Creating model")
     model = keras.models.Sequential()
     model.add(keras.layers.Dense(100,activation='sigmoid'))
-    model.add(keras.layers.Dense(100,activation='sigmoid'))
     model.add(keras.layers.Dense(100,activation='relu'))
     model.add(keras.layers.Dense(1,activation='relu'))
     model.compile('nadam','mean_squared_error',['cosine_proximity'])
