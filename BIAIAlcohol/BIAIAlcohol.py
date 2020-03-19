@@ -1,5 +1,6 @@
 #Application generates data for AI and teaches it to approximate Blood Alcohol Content based on amount of beverages drunk and person parameters.
 
+#currently working with http://www.kenderdinemathstutoring.com.au/downloads/3011085/BAC+formula+questioned+amended.pdf
 
 #globals
 separator=","
@@ -112,7 +113,8 @@ class AmountOfAlcohol:
         return None
 
     def pureAlcohol(self):
-        return 1000*self.beverage1Amount*self.beverage1Percentage+1000*self.beverage2Amount*self.beverage2Percentage+1000*self.beverage3Amount+self.beverage3Percentage
+        #       na gramy*gęstość alkoholu w litrze*(procentowe zawartości)
+        return 0.001*0.79*(1000*self.beverage1Amount*self.beverage1Percentage+1000*self.beverage2Amount*self.beverage2Percentage+1000*self.beverage3Amount+self.beverage3Percentage)
 
     def randomize(self):
         self.beverage1Amount=round(random.uniform(applicationConfiguration.Beverage1MinAmountML,applicationConfiguration.Beverage1MaxAmountML),applicationConfiguration.roundPlaces)
@@ -197,8 +199,8 @@ class Person:
 
     def toArray(self):
         result=[]
-        result.append(self.age)
-        result.append(self.height)
+        #result.append(self.age)
+        #result.append(self.height)
         result.append(self.weight)
         result.append(self.gender)
         return result
@@ -232,17 +234,25 @@ class BloodAlcoholContent:
         alcoholDensity=0.79
         decay=0.1
         if self.drinksOften==0.0:
-            decay=0.1
+            decay=0.01
         elif self.drinksOften==1.0:
-            decay=0.15
+            decay=0.015
         elif self.drinksOften==2.0:
-            decay=0.2
-        result=(self.amountOfAlcohol.pureAlcohol()/self.person.calculateBodyLiquids())*alcoholDensity-(self.drinkingTime*decay)
+            decay=0.02
+        #backup of extended equation
+        #result=(self.amountOfAlcohol.pureAlcohol()/self.person.calculateBodyLiquids())*alcoholDensity-(self.drinkingTime*decay)
+        result=0.0
+        #http://www.kenderdinemathstutoring.com.au/downloads/3011085/BAC+formula+questioned+amended.pdf
+        if self.person.gender==0.0:
+            result=(self.amountOfAlcohol.pureAlcohol()*100/(0.7*self.person.weight))-(decay*self.drinkingTime)
+        else:
+            result=(self.amountOfAlcohol.pureAlcohol()*100/(0.6*self.person.weight))-(decay*self.drinkingTime)
+        #end of simplified equation changes
         if applicationConfiguration.doAddUncertainity==1:
             result=result+result*(0.21)
         if result<0:
             result=0
-        return result;
+        return result*10;#percent do promile, dlatego *10
 
     #max 0.0010% alcohol content
     def randomize(self):
@@ -329,7 +339,7 @@ if applicationConfiguration.doTrainModel==1:
     model.add(keras.layers.Dense(100,activation='relu'))
     model.add(keras.layers.Dense(1,activation='relu'))
     model.compile('nadam','mean_squared_error',['accuracy'])
-    model.fit(x=np.array(datasetX),y=np.asarray(datasetY),epochs=4,verbose=1)
+    model.fit(x=np.array(datasetX),y=np.asarray(datasetY),epochs=10,verbose=2)
     model.save(applicationConfiguration.modelLocation)
     #TODO
 
@@ -381,10 +391,10 @@ if applicationConfiguration.useTestSet==1:
     testsetX=[]
     testsetY=[]
     #for i in range(0,applicationConfiguration.datasetSize):
-    for i in range(0,applicationConfiguration.testSetSize-1):
+    for i in range(0,applicationConfiguration.testSetSize):
         testsetX.append(testSet[i].toArray())
         testsetY.append(testSet[i].CalculateBAC())
-    for i in range(0,applicationConfiguration.testSetSize-1):
+    for i in range(0,applicationConfiguration.testSetSize):
         testdata=[]
         for obj in testsetX[i]:
             testdata.append(obj)
@@ -392,9 +402,8 @@ if applicationConfiguration.useTestSet==1:
         print("ML predicted: ") 
         print(prediction[0][0])
         print("Result is: ")
-        print(dataset[i].CalculateBAC())
+        print(testSet[i].CalculateBAC())
         print("-----------------------")
-
 
 
 #TODO console interface
