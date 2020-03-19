@@ -86,12 +86,16 @@ applicationConfiguration=Configuration()
 
 
 #imports
+import numpy as np
+np.random.seed(2)
+
 import random
 import math
 import tensorflow as tf
+#from tensorflow import set_random_seed
+#set_random_seed(31337)
 import keras
 from keras.models import load_model
-import numpy as np
 
 #CLASSES needed to store data
 
@@ -340,14 +344,16 @@ if applicationConfiguration.doTrainModel==1:
     model.add(keras.layers.Dense(100,activation='sigmoid'))
     model.add(keras.layers.Dense(100,activation='relu'))
     model.add(keras.layers.Dense(1,activation='relu'))
-    model.compile('nadam','mean_squared_error',['cosine_proximity'])
-    model.fit(x=np.array(datasetX),y=np.asarray(datasetY),epochs=10,verbose=2)
+    #model.compile('nadam','mean_squared_error',['mean_absolute_percentage_error','cosine_proximity'])
+    #cosine proximity loss seems to be the problem with randomness
+    model.compile('nadam','mean_squared_error',['logcosh','mean_squared_logarithmic_error'])
+    model.fit(x=np.array(datasetX),y=np.asarray(datasetY),epochs=50,verbose=2)
     model.save(applicationConfiguration.modelLocation)
     #TODO
     
 
 #use model
-if applicationConfiguration.doUseModel==1:
+if applicationConfiguration.doUseModel==1.0:
     model=keras.models.load_model(applicationConfiguration.modelLocation)
     print("Model loaded from: "+applicationConfiguration.modelLocation)
 
