@@ -242,7 +242,7 @@ class BloodAlcoholContent:
             result=result+result*(0.21)
         if result<0:
             result=0
-        return result*10;
+        return result;
 
     #max 0.0010% alcohol content
     def randomize(self):
@@ -325,11 +325,11 @@ model=0
 if applicationConfiguration.doTrainModel==1:
     print("Creating model")
     model = keras.models.Sequential()
-    model.add(keras.layers.Dense(101,activation='relu'))
-    model.add(keras.layers.Dense(101,activation='relu'))
-    model.add(keras.layers.Dense(101,activation='softmax'))
-    model.compile('adam','sparse_categorical_crossentropy',['accuracy'])
-    model.fit(x=np.array(datasetX),y=np.asarray(datasetY),epochs=10,verbose=2)
+    model.add(keras.layers.Dense(100,activation='softmax'))
+    model.add(keras.layers.Dense(100,activation='relu'))
+    model.add(keras.layers.Dense(1,activation='relu'))
+    model.compile('nadam','mean_squared_error',['accuracy'])
+    model.fit(x=np.array(datasetX),y=np.asarray(datasetY),epochs=4,verbose=1)
     model.save(applicationConfiguration.modelLocation)
     #TODO
 
@@ -390,9 +390,9 @@ if applicationConfiguration.useTestSet==1:
             testdata.append(obj)
         prediction=model.predict([[testdata]])
         print("ML predicted: ") 
-        print(float(np.argmax(prediction[0]))/10.0)
+        print(prediction[0][0])
         print("Result is: ")
-        print(dataset[i].CalculateBAC()/10.0)
+        print(dataset[i].CalculateBAC())
         print("-----------------------")
 
 
