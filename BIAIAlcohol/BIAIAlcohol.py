@@ -336,11 +336,11 @@ model=0
 if applicationConfiguration.doTrainModel==1:
     print("Creating model")
     model = keras.models.Sequential()
-    model.add(keras.layers.Dense(100,activation='softmax'))
-    model.add(keras.layers.Dense(100,activation='tanh'))
+    model.add(keras.layers.Dense(100,activation='sigmoid'))
+    model.add(keras.layers.Dense(100,activation='sigmoid'))
     model.add(keras.layers.Dense(100,activation='relu'))
     model.add(keras.layers.Dense(1,activation='relu'))
-    model.compile('nadam','mean_squared_error',['accuracy'])
+    model.compile('nadam','mean_squared_error',['cosine_proximity'])
     model.fit(x=np.array(datasetX),y=np.asarray(datasetY),epochs=10,verbose=2)
     model.save(applicationConfiguration.modelLocation)
     #TODO
