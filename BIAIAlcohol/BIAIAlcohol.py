@@ -1,6 +1,7 @@
 #Application generates data for AI and teaches it to approximate Blood Alcohol Content based on amount of beverages drunk and person parameters.
 
 #currently working with http://www.kenderdinemathstutoring.com.au/downloads/3011085/BAC+formula+questioned+amended.pdf
+#https://mojafirma.infor.pl/moto/kalkulatory/30,kalkulator-alkomat.html
 
 #globals
 separator=","
@@ -114,7 +115,7 @@ class AmountOfAlcohol:
 
     def pureAlcohol(self):
         #       na gramy*gęstość alkoholu w litrze*(procentowe zawartości)
-        return 0.001*0.79*(1000*self.beverage1Amount*self.beverage1Percentage+1000*self.beverage2Amount*self.beverage2Percentage+1000*self.beverage3Amount+self.beverage3Percentage)
+        return 0.001*0.79*((1000*self.beverage1Amount*self.beverage1Percentage)+(1000*self.beverage2Amount*self.beverage2Percentage)+(1000*self.beverage3Amount*self.beverage3Percentage))
 
     def randomize(self):
         self.beverage1Amount=round(random.uniform(applicationConfiguration.Beverage1MinAmountML,applicationConfiguration.Beverage1MaxAmountML),applicationConfiguration.roundPlaces)
@@ -142,10 +143,10 @@ class AmountOfAlcohol:
         result = []
         result.append(self.beverage1Amount)
         result.append(self.beverage1Percentage)
-        #result.append(self.beverage2Amount)
-        #result.append(self.beverage2Percentage)
-        #result.append(self.beverage3Amount)
-        #result.append(self.beverage3Percentage)
+        result.append(self.beverage2Amount)
+        result.append(self.beverage2Percentage)
+        result.append(self.beverage3Amount)
+        result.append(self.beverage3Percentage)
         return result
 
 class Person:
@@ -336,6 +337,7 @@ if applicationConfiguration.doTrainModel==1:
     print("Creating model")
     model = keras.models.Sequential()
     model.add(keras.layers.Dense(100,activation='softmax'))
+    model.add(keras.layers.Dense(100,activation='tanh'))
     model.add(keras.layers.Dense(100,activation='relu'))
     model.add(keras.layers.Dense(1,activation='relu'))
     model.compile('nadam','mean_squared_error',['accuracy'])
