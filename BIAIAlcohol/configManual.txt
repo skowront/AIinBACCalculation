@@ -31,3 +31,5 @@ GenerateTestSet? - app will generate a test set
 TestSetSize - test set size
 TestSetLocation - test set path/location
 UseTestSet? - when equal 1, the app will use test set from location above and size above above
+UseConsoleInterface? - when equal 1, the app will launch with console interface
+UseGraphicalInterface? - when equal 1, the app will launch with graphical interface

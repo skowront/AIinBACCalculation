@@ -43,6 +43,8 @@ class Configuration:
     testSetSize=10
     testSetLocation="testSet.txt"
     useTestSet=1
+    useConsoleInterface=1
+    useGraphicalInterface=1
     def __init__(self):
         file=open(configurationFile, "r")
         self.generateData=int(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
@@ -78,6 +80,8 @@ class Configuration:
         self.testSetSize=int(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
         self.testSetLocation=(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
         self.useTestSet=int(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.useConsoleInterface=int(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
+        self.useGraphicalInterface=int(file.readline().split(configurationFileSeparator)[1].replace('\n',''))
         file.close()
         return None
 
@@ -323,8 +327,6 @@ for i in range(0,applicationConfiguration.datasetSize):
     dataset.append(BAC)
 file.close()
 
-#BELOW UNCERTAIN, TODO then
-
 #convert BACs to array X and Y
 datasetX=[]
 datasetY=[]
@@ -349,7 +351,6 @@ if applicationConfiguration.doTrainModel==1:
     model.compile('nadam','mean_squared_error',['logcosh','mean_squared_logarithmic_error'])
     model.fit(x=np.array(datasetX),y=np.asarray(datasetY),epochs=50,verbose=2)
     model.save(applicationConfiguration.modelLocation)
-    #TODO
     
 
 #use model
@@ -357,8 +358,8 @@ if applicationConfiguration.doUseModel==1.0:
     model=keras.models.load_model(applicationConfiguration.modelLocation)
     print("Model loaded from: "+applicationConfiguration.modelLocation)
 
-val_loss,val_acc=model.evaluate([datasetX],datasetY)
-print(val_loss,val_acc)
+#val_loss,val_acc=model.evaluate([datasetX],datasetY)
+#print(val_loss,val_acc)
 
 
 #predict sth that ML learned
@@ -414,7 +415,188 @@ if applicationConfiguration.useTestSet==1:
         print(testSet[i].CalculateBAC())
         print("-----------------------")
 
+#check if user wants to use console interface
+if applicationConfiguration.useConsoleInterface==1:
+    print("Welcome to Blood Alcohol Content Calculation!")
 
-#TODO console interface
+    #gather intel about user
+    print("Please enter your age:")
+    age = float(input())
+    print("Please enter your height (in cm):")
+    height = float(input())
+    print("Please enter your weight (in kg):")
+    weight = float(input())
+    print("Please enter your gender (0 for male, 1 for female):")
+    gender = int(input())
 
+    #now gather drink intel
+    print("Now you will be asked to enter 3 different types of beverages, distinguished by their % content of alcohol")
+    print("If you have drunk less types please enter 0 when asked for amount")
+    print("Please enter the amount of 1st beverage (in l):")
+    bev1 = float(input())
+    print("Please enter the alcohol content of 1st beverage (in %):")
+    bev1Perc = float(input())
+    bev1Perc /=100
+
+    print("Please enter the amount of 2nd beverage (in l):")
+    bev2 = float(input())
+    if bev2 != 0:
+        print("Please enter the alcohol content of 2nd beverage (in %):")
+        bev2Perc = float(input())
+        bev2Perc /= 100
+        print("Please enter the amount of 3rd beverage (in l):")
+        bev3 = float(input())
+        if bev3 != 0:
+            print("Please enter the alcohol content of 3rd beverage (in %):")
+            bev3Perc = float(input())
+            bev3Perc /= 100
+        else:
+            print("Assumed you drank only 2 typs of beverage")
+            bev3Perc = 0
+    else:
+        print("Assumed you drank only 1 type of beverage")
+        bev2Perc = 0
+        bev3 = 0
+        bev3Perc = 0
+
+    print("Please enter how many hours did you drink for?")
+    hours = float(input())
+    print("Please enter how often do you drink? (0 - rarely, 1 - sometimes, 2 - often)")
+    drinksOften = int(input())
+
+    #convert user's input into one string for further calculations
+    userInput = str(age) + "," + str(height) + "," + str(weight) + "," + str(gender) + "," + str(bev1) + "," + str(bev1Perc) + "," + str(bev2) + "," + str(bev2Perc) + "," + str(bev3) + "," + str(bev3Perc) + "," + str(hours) + "," + str(drinksOften)
+    BAC=BloodAlcoholContent()
+    BAC.bloodAlcoholContentFromString(userInput)
+    toCheck = []
+    toCheck.append(BAC)
+
+    #convert BACs to array X and Y
+    toCheckX=[]
+    toCheckY=[]
+
+    toCheckX.append(toCheck[0].toArray())
+    toCheckY.append(toCheck[0].CalculateBAC())
+    data=[]
+    for obj in toCheckX[0]:
+        data.append(obj)
+    prediction=model.predict([[data]])
+    print("ML predicted: ") 
+    print(prediction[0][0])
+    print("Result is: ")
+    print(toCheck[0].CalculateBAC())
+    print("-----------------------")
+
+#check if user wants to use graphical interface
+if applicationConfiguration.useGraphicalInterface==1:
+    from tkinter import *
+    window = Tk()
+    window.title("Blood Alcohol Content Calculation")
+    window.resizable(0,0)
+
+    def click():
+        age = float(ageEntry.get())
+        height = float(heightEntry.get())
+        weight = float(weightEntry.get())
+        gender = float(genderEntry.get())
+
+        bev1 = float(bev1Entry.get())
+        bev1Perc = float(bev1PEntry.get())
+        bev1Perc /= 100
+
+        bev2 = float(bev2Entry.get())
+        bev2Perc = float(bev2PEntry.get())
+        bev2Perc /= 100
+
+        bev3 = float(bev3Entry.get())
+        bev3Perc = float(bev3PEntry.get())
+        bev3Perc /= 100
+
+        hours = float(hoursEntry.get())
+        drinksOften = float(howOftenEntry.get())
+
+        userInput = str(age) + "," + str(height) + "," + str(weight) + "," + str(gender) + "," + str(bev1) + "," + str(bev1Perc) + "," + str(bev2) + "," + str(bev2Perc) + "," + str(bev3) + "," + str(bev3Perc) + "," + str(hours) + "," + str(drinksOften)
+        BAC=BloodAlcoholContent()
+        BAC.bloodAlcoholContentFromString(userInput)
+        toCheck = []
+        toCheck.append(BAC)
+
+        #convert BACs to array X and Y
+        toCheckX=[]
+        toCheckY=[]
+
+        toCheckX.append(toCheck[0].toArray())
+        toCheckY.append(toCheck[0].CalculateBAC())
+        data=[]
+        for obj in toCheckX[0]:
+            data.append(obj)
+        prediction=model.predict([[data]])
+
+        outputML = Label(window, width=25, height=1, text = prediction[0][0], fg="black", font="none 12") .grid(row=10, column=1, columnspan=2, sticky=W)
+
+        outputAC = Label(window, width=25, height=1, text = toCheck[0].CalculateBAC(), fg="black", font="none 12") .grid(row=11, column=1, columnspan=2, sticky=W)
+        
+    Label (window, text="Please enter the following information about yourself", fg="black", font="none 12") .grid(row=0, columnspan=4, sticky=N)
+
+    Label (window, text="Gender (0 - male, 1 - female):", fg="black", font="none 12") .grid(row=1, column=0, sticky=W)
+    genderEntry = Entry(window, width=20, bg="white")
+    genderEntry.grid(row=1, column=1, sticky=W)
+
+    Label (window, text="Age:", fg="black", font="none 12") .grid(row=2, column=0, sticky=E)
+    ageEntry = Entry(window, width=20, bg="white")
+    ageEntry.grid(row=2, column=1, sticky=W)
+    
+    Label (window, text="Height in cm:", fg="black", font="none 12") .grid(row=1, column=2, sticky=E)
+    heightEntry = Entry(window, width=20, bg="white")
+    heightEntry.grid(row=1, column=3, sticky=W)
+
+    Label (window, text="Weight in kg:", fg="black", font="none 12") .grid(row=2, column=2, sticky=E)
+    weightEntry = Entry(window, width=20, bg="white")
+    weightEntry.grid(row=2, column=3, sticky=W)
+
+    Label (window, text="Please enter the following information about beverages you drank", fg="black", font="none 12") .grid(row=3, columnspan=4, sticky=S)
+    
+    Label (window, text="Beverage1 amount in liters:", fg="black", font="none 12") .grid(row=4, column=0, sticky=E)
+    bev1Entry = Entry(window, width=20, bg="white")
+    bev1Entry.insert(END, '0')
+    bev1Entry.grid(row=4, column=1, sticky=W)
+
+    Label (window, text="alcohol content in %:", fg="black", font="none 12") .grid(row=4, column=2, sticky=E)
+    bev1PEntry = Entry(window, width=20, bg="white")
+    bev1PEntry.insert(END, '0')
+    bev1PEntry.grid(row=4, column=3, sticky=W)
+
+    Label (window, text="Beverage2 amount in liters:", fg="black", font="none 12") .grid(row=5, column=0, sticky=E)
+    bev2Entry = Entry(window, width=20, bg="white")
+    bev2Entry.insert(END, '0')
+    bev2Entry.grid(row=5, column=1, sticky=W)
+
+    Label (window, text="alcohol content in %:", fg="black", font="none 12") .grid(row=5, column=2, sticky=E)
+    bev2PEntry = Entry(window, width=20, bg="white")
+    bev2PEntry.insert(END, '0')
+    bev2PEntry.grid(row=5, column=3, sticky=W)
+
+    Label (window, text="Beverage3 amount in liters:", fg="black", font="none 12") .grid(row=6, column=0, sticky=E)
+    bev3Entry = Entry(window, width=20, bg="white")
+    bev3Entry.insert(END, '0')
+    bev3Entry.grid(row=6, column=1, sticky=W)
+
+    Label (window, text="alcohol content in %:", fg="black", font="none 12") .grid(row=6, column=2, sticky=E)
+    bev3PEntry = Entry(window, width=20, bg="white")
+    bev3PEntry.insert(END, '0')
+    bev3PEntry.grid(row=6, column=3, sticky=W)
+
+    Label (window, text="For how many hours have you been drinking?", fg="black", font="none 12") .grid(row=7, columnspan=3, sticky=E)
+    hoursEntry = Entry(window, width=20, bg="white")
+    hoursEntry.grid(row=7, column=3, sticky=W)
+
+    Label (window, text="How often do you drink (0 - rarely, 1 - sometimes, 2 - often)?", fg="black", font="none 12") .grid(row=8, columnspan=3, sticky=E)
+    howOftenEntry = Entry(window, width=20, bg="white")
+    howOftenEntry.grid(row=8, column=3, sticky=W)
+
+    Button (window, text="Check the results!", width=0, fg="black", font="none 12", command=click) .grid(row=9, columnspan=3, sticky=S)
+    Label (window, text="Predicted by ML:", width=0, fg="black", font="none 12") .grid(row=10, column=0, sticky=E)
+    Label (window, text="Calculated using formula:", width=0, fg="black", font="none 12") .grid(row=11, column=0, sticky=E)
+
+    window.mainloop()
 
