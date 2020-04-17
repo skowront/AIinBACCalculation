@@ -349,7 +349,7 @@ if applicationConfiguration.doTrainModel==1:
     #model.compile('nadam','mean_squared_error',['mean_absolute_percentage_error','cosine_proximity'])
     #cosine proximity loss seems to be the problem with randomness
     model.compile('nadam','mean_squared_error',['logcosh','mean_squared_logarithmic_error'])
-    model.fit(x=np.array(datasetX),y=np.asarray(datasetY),epochs=50,verbose=2)
+    model.fit(x=np.array(datasetX),y=np.asarray(datasetY),epochs=20,verbose=2)
     model.save(applicationConfiguration.modelLocation)
     
 
@@ -486,6 +486,8 @@ if applicationConfiguration.useConsoleInterface==1:
     print("Result is: ")
     print(toCheck[0].CalculateBAC())
     print("-----------------------")
+
+
 
 #check if user wants to use graphical interface
 if applicationConfiguration.useGraphicalInterface==1:
