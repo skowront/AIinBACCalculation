@@ -346,10 +346,8 @@ if applicationConfiguration.doTrainModel==1:
     model.add(keras.layers.Dense(100,activation='sigmoid'))
     model.add(keras.layers.Dense(100,activation='relu'))
     model.add(keras.layers.Dense(1,activation='relu'))
-    #model.compile('nadam','mean_squared_error',['mean_absolute_percentage_error','cosine_proximity'])
-    #cosine proximity loss seems to be the problem with randomness
     model.compile('nadam','mean_squared_error',['logcosh','mean_squared_logarithmic_error'])
-    model.fit(x=np.array(datasetX),y=np.asarray(datasetY),epochs=20,verbose=2)
+    model.fit(x=np.array(datasetX),y=np.asarray(datasetY),epochs=3,verbose=2)
     model.save(applicationConfiguration.modelLocation)
     
 
